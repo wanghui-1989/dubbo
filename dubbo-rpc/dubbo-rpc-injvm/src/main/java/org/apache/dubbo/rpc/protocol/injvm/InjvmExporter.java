@@ -29,6 +29,7 @@ class InjvmExporter<T> extends AbstractExporter<T> {
 
     private final String key;
 
+    //<服务唯一名称，服务的导出者>
     private final Map<String, Exporter<?>> exporterMap;
 
     InjvmExporter(Invoker<T> invoker, String key, Map<String, Exporter<?>> exporterMap) {

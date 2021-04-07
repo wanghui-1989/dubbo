@@ -19,6 +19,8 @@ package org.apache.dubbo.rpc;
 /**
  * Exporter. (API/SPI, Prototype, ThreadSafe)
  *
+ * 负责导出即暴露服务，每个协议都有一个对应的导出者，负责暴露和取消暴露协议对应的服务(Invoker)
+ *
  * @see org.apache.dubbo.rpc.Protocol#export(Invoker)
  * @see org.apache.dubbo.rpc.ExporterListener
  * @see org.apache.dubbo.rpc.protocol.AbstractExporter
@@ -27,6 +29,7 @@ public interface Exporter<T> {
 
     /**
      * get invoker.
+     * 每个Exporter都会包含一个Invoker
      *
      * @return invoker
      */

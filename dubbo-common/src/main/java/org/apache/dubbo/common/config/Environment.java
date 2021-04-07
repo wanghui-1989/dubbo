@@ -37,7 +37,9 @@ import java.util.Optional;
 
 public class Environment extends LifecycleAdapter implements FrameworkExt {
     private static final Logger logger = LoggerFactory.getLogger(Environment.class);
-
+    //config=org.apache.dubbo.config.context.ConfigManager
+    //environment=org.apache.dubbo.common.config.Environment
+    //repository=org.apache.dubbo.rpc.model.ServiceRepository
     public static final String NAME = "environment";
 
     private final PropertiesConfiguration propertiesConfiguration;

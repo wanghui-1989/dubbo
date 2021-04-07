@@ -585,6 +585,11 @@ public class ExtensionLoader<T> {
         }
     }
 
+    /**
+     * 调用该方法，会为每个spi接口生成对应的自适应扩展类，默认扩展类名取的是接口头部@SPI("我是默认扩展名称")的value值，
+     * 内部会解析配置总线url，获取url中配置的对应字段值，然后返回对应的扩展实现类对象。
+     * @return 自适应扩展对象
+     */
     @SuppressWarnings("unchecked")
     public T getAdaptiveExtension() {
         Object instance = cachedAdaptiveInstance.get();
@@ -639,11 +644,14 @@ public class ExtensionLoader<T> {
 
     @SuppressWarnings("unchecked")
     private T createExtension(String name, boolean wrap) {
+        //假如name=dubbo，因为dubbo框架是默认自动包装的，所以默认wrap=true
+        //clazz=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
         Class<?> clazz = getExtensionClasses().get(name);
         if (clazz == null) {
             throw findException(name);
         }
         try {
+            //instance为DubboProtocol的实例
             T instance = (T) EXTENSION_INSTANCES.get(clazz);
             if (instance == null) {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
@@ -661,6 +669,10 @@ public class ExtensionLoader<T> {
                     Collections.reverse(wrapperClassesList);
                 }
 
+                //Protocol的wrapper类有三个，
+                //排序后为ProtocolListenerWrapper,ProtocolFilterWrapper,QosProtocolWrapper
+                //循环开始时instance为DubboProtocol的实例，然后一层一层的包装，最后是：
+                //QosProtocolWrapper包了ProtocolFilterWrapper包了ProtocolListenerWrapper包了DubboProtocol
                 if (CollectionUtils.isNotEmpty(wrapperClassesList)) {
                     for (Class<?> wrapperClass : wrapperClassesList) {
                         Wrapper wrapper = wrapperClass.getAnnotation(Wrapper.class);

@@ -116,6 +116,99 @@ public abstract class Wrapper {
         return WRAPPER_MAP.computeIfAbsent(c, key -> makeWrapper(key));
     }
 
+    /**
+     * 生成包装类，这是一个通用的生成方式，
+     * 大概方向是，解析代理类的所有属性和方法，添加到新生成的"Wrapper自增数字.class"的属性集合中，
+     * 如属性字段pns包含了代理类所有的属性名称。用统一的三个方法完成get，set，invoke，
+     * 即getPropertyValue，setPropertyValue，invokeMethod。
+     * 方法内部逻辑基本为1.先将入参代理对象obj转为对应类型。2.查找属性集合中有没有对应的属性和方法。
+     * 3.有的话就调用get，set，或者主动调用方法。4.没有的话就抛出异常。
+     * 假如入参c=org.apache.dubbo.demo.provider.GreetingServiceImpl，
+     * 则生成的Wrapper源代码为：
+     * package org.apache.dubbo.common.bytecode;
+     *
+     * import java.lang.reflect.InvocationTargetException;
+     * import java.util.Map;
+     *
+     * import org.apache.dubbo.common.bytecode.ClassGenerator;
+     * import org.apache.dubbo.common.bytecode.NoSuchMethodException;
+     * import org.apache.dubbo.common.bytecode.NoSuchPropertyException;
+     * import org.apache.dubbo.common.bytecode.Wrapper;
+     * import org.apache.dubbo.demo.provider.GreetingServiceImpl;
+     *
+     * public class Wrapper1 extends Wrapper implements ClassGenerator.DC {
+     *     public static String[] pns;
+     *     public static Map pts;
+     *     public static String[] mns;
+     *     public static String[] dmns;
+     *     public static Class[] mts0;
+     *
+     *     public String[] getPropertyNames() {
+     *         return pns;
+     *     }
+     *
+     *     public boolean hasProperty(String string) {
+     *         return pts.containsKey(string);
+     *     }
+     *
+     *     public Class getPropertyType(String string) {
+     *         return (Class) pts.get(string);
+     *     }
+     *
+     *     public String[] getMethodNames() {
+     *         return mns;
+     *     }
+     *
+     *     public String[] getDeclaredMethodNames() {
+     *         return dmns;
+     *     }
+     *
+     *     public void setPropertyValue(Object object, String string, Object object2) {
+     *         try {
+     *             GreetingServiceImpl greetingServiceImpl = (GreetingServiceImpl) object;
+     *         } catch (Throwable throwable) {
+     *             throw new IllegalArgumentException(throwable);
+     *         }
+     *         throw new NoSuchPropertyException(new StringBuffer().append("Not found property \"")
+     *                 .append(string)
+     *                 .append("\" field or setter method in class org.apache.dubbo.demo.provider.GreetingServiceImpl.")
+     *                 .toString());
+     *     }
+     *
+     *     public Object getPropertyValue(Object object, String string) {
+     *         try {
+     *             GreetingServiceImpl greetingServiceImpl = (GreetingServiceImpl) object;
+     *         } catch (Throwable throwable) {
+     *             throw new IllegalArgumentException(throwable);
+     *         }
+     *         throw new NoSuchPropertyException(new StringBuffer().append("Not found property \"")
+     *                 .append(string)
+     *                 .append("\" field or getter method in class org.apache.dubbo.demo.provider.GreetingServiceImpl.")
+     *                 .toString());
+     *     }
+     *
+     *     public Object invokeMethod(Object object, String string, Class[] classArray, Object[] objectArray) throws InvocationTargetException {
+     *         GreetingServiceImpl greetingServiceImpl;
+     *         try {
+     *             greetingServiceImpl = (GreetingServiceImpl) object;
+     *         } catch (Throwable throwable) {
+     *             throw new IllegalArgumentException(throwable);
+     *         }
+     *         try {
+     *             if ("hello".equals(string) && classArray.length == 0) {
+     *                 return greetingServiceImpl.hello();
+     *             }
+     *         } catch (Throwable throwable) {
+     *             throw new InvocationTargetException(throwable);
+     *         }
+     *         throw new NoSuchMethodException(new StringBuffer().append("Not found method \"")
+     *                 .append(string)
+     *                 .append("\" in class org.apache.dubbo.demo.provider.GreetingServiceImpl.")
+     *                 .toString());
+     *     }
+     * }
+     *
+     */
     private static Wrapper makeWrapper(Class<?> c) {
         if (c.isPrimitive()) {
             throw new IllegalArgumentException("Can not create wrapper for primitive type: " + c);

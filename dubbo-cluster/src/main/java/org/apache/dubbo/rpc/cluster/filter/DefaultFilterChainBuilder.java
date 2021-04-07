@@ -33,8 +33,9 @@ public class DefaultFilterChainBuilder implements FilterChainBuilder {
     @Override
     public <T> Invoker<T> buildInvokerChain(final Invoker<T> originalInvoker, String key, String group) {
         Invoker<T> last = originalInvoker;
+        //有很多如：MonitorFilter,TimeoutFilter,TraceFilter,ExceptionFilter等
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(originalInvoker.getUrl(), key, group);
-
+        //构造Invoker的过滤器链，方便对每个调用执行做耗时、超时等统计
         if (!filters.isEmpty()) {
             for (int i = filters.size() - 1; i >= 0; i--) {
                 final Filter filter = filters.get(i);

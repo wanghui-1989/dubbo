@@ -245,6 +245,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         checkStubAndLocal(interfaceClass);
         ConfigValidationUtils.checkMock(interfaceClass, this);
 
+        //从这里开始解析各种消费方配置，放入map
         Map<String, String> map = new HashMap<String, String>();
         map.put(SIDE_KEY, CONSUMER_SIDE);
 
@@ -305,6 +306,12 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
         serviceMetadata.getAttachments().putAll(map);
 
+        //map={"mapping-type":"metadata","init":"false","side":"consumer","register.ip":"192.168.2.3",
+        // "release":"","methods":"sayHello,sayHelloAsync","qos.port":"33333","provided-by":"demo-provider",
+        // "dubbo":"2.0.2","pid":"35116","check":"true","interface":"org.apache.dubbo.demo.DemoService",
+        // "enable.auto.migration":"true","mapping.type":"metadata","metadata-type":"remote",
+        // "application":"demo-consumer","sticky":"false","timestamp":"1617676272015","enable-auto-migration":"true"}
+        //创建消费方service代理
         ref = createProxy(map);
 
         serviceMetadata.setTarget(ref);
@@ -324,6 +331,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
         if (shouldJvmRefer(map)) {
+            //injvm本地引用
             URL url = new URL(LOCAL_PROTOCOL, LOCALHOST_VALUE, 0, interfaceClass.getName()).addParameters(map);
             invoker = REF_PROTOCOL.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
@@ -355,11 +363,24 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                     List<URL> us = ConfigValidationUtils.loadRegistries(this, false);
                     if (CollectionUtils.isNotEmpty(us)) {
                         for (URL u : us) {
+                            //u为：service-discovery-registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+                            // ?application=demo-consumer&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true
+                            // &id=org.apache.dubbo.config.RegistryConfig&mapping-type=metadata&mapping.type=metadata&pid=35464
+                            // &qos.port=33333&registry=zookeeper&registry-type=service&timestamp=1617691511274
                             URL monitorUrl = ConfigValidationUtils.loadMonitor(this, u);
                             if (monitorUrl != null) {
                                 map.put(MONITOR_KEY, URL.encode(monitorUrl.toFullString()));
                             }
                             urls.add(u.putAttribute(REFER_KEY, map));
+                            //最后u为：service-discovery-registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+                            //?application=demo-consumer&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true
+                            // &id=org.apache.dubbo.config.RegistryConfig&mapping-type=metadata&mapping.type=metadata&pid=35464
+                            // &qos.port=33333&refer=application%3Ddemo-consumer%26check%3Dtrue%26dubbo%3D2.0.2%26enable-auto-migration
+                            // %3Dtrue%26enable.auto.migration%3Dtrue%26init%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService
+                            // %26mapping-type%3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3DsayHello
+                            // %2CsayHelloAsync%26pid%3D35464%26provided-by%3Ddemo-provider%26qos.port%3D33333%26register.ip
+                            // %3D192.168.2.3%26side%3Dconsumer%26sticky%3Dfalse%26timestamp%3D1617691363326&registry=zookeeper
+                            // &registry-type=service&timestamp=1617691511274
                         }
                     }
                     if (urls.isEmpty()) {
@@ -369,6 +390,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             }
 
             if (urls.size() == 1) {
+                //url.protocol=service-discovery-registry，对应的protocol为：RegistryProtocol
+                //相当于RegistryProtocol对提供方来说负责服务注册，对于消费方来说负责服务引用。
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
             } else {
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
@@ -489,9 +512,19 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
      * 3. otherwise, check scope parameter
      * 4. if scope is not specified but the target service is provided in the same JVM, then prefer to make the local
      * call, which is the default behavior
+     * 从配置中找出是否应该引用同一JVM中的服务。默认行为为true
+     * 1。如果指定了injvm，则使用它
+     * 2。如果指定了一个url，那么假设它是一个远程调用
+     * 3。否则，检查范围参数
+     * 4。如果没有指定作用域，但目标服务是在同一个JVM中提供的，则首选进行本地调用，这是默认行为
      */
     protected boolean shouldJvmRefer(Map<String, String> map) {
         URL tmpUrl = new URL("temp", "localhost", 0, map);
+        //tmpUrl=temp://localhost?application=demo-consumer&check=true&dubbo=2.0.2&enable-auto-migration=true
+        //&enable.auto.migration=true&init=false&interface=org.apache.dubbo.demo.DemoService
+        //&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=sayHello,sayHelloAsync
+        //&pid=35258&provided-by=demo-provider&qos.port=33333&register.ip=192.168.2.3&release=
+        //&side=consumer&sticky=false&timestamp=1617687136894
         boolean isJvmRefer;
         if (isInjvm() == null) {
             // if a url is specified, don't do local reference

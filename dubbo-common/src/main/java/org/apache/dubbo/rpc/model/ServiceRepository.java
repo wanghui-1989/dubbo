@@ -34,7 +34,9 @@ import static org.apache.dubbo.common.BaseServiceMetadata.interfaceFromServiceKe
 import static org.apache.dubbo.common.BaseServiceMetadata.versionFromServiceKey;
 
 public class ServiceRepository extends LifecycleAdapter implements FrameworkExt {
-
+    //config=org.apache.dubbo.config.context.ConfigManager
+    //environment=org.apache.dubbo.common.config.Environment
+    //repository=org.apache.dubbo.rpc.model.ServiceRepository
     public static final String NAME = "repository";
 
     // services

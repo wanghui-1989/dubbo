@@ -39,6 +39,7 @@ public class InterfaceCompatibleRegistryProtocol extends RegistryProtocol {
         URL registryUrl = originInvoker.getUrl();
         if (REGISTRY_PROTOCOL.equals(registryUrl.getProtocol())) {
             String protocol = registryUrl.getParameter(REGISTRY_KEY, DEFAULT_REGISTRY);
+            //此时url.protocol=registry, 改为变量protocol的值，一般为zookeeper或者dubbo
             registryUrl = registryUrl.setProtocol(protocol).removeParameter(REGISTRY_KEY);
         }
         return registryUrl;

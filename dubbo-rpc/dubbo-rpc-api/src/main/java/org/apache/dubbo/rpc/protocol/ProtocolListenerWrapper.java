@@ -47,6 +47,7 @@ public class ProtocolListenerWrapper implements Protocol {
     private final Protocol protocol;
 
     public ProtocolListenerWrapper(Protocol protocol) {
+        //protocol默认实现是DubboProtocol
         if (protocol == null) {
             throw new IllegalArgumentException("protocol == null");
         }

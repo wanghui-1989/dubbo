@@ -34,6 +34,8 @@ import static org.apache.dubbo.common.constants.CommonConstants.SERVICE_FILTER_K
 
 /**
  * ListenerProtocol
+ * 包装类的作用，类似于AOP，即统一的为所有该接口的实例进行功能扩展，如环绕通知，前置、后置通知。
+ * 不断的包装，不断的添加功能逻辑。
  */
 @Activate(order = 100)
 public class ProtocolFilterWrapper implements Protocol {
@@ -56,9 +58,11 @@ public class ProtocolFilterWrapper implements Protocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        //是registry协议
         if (UrlUtils.isRegistry(invoker.getUrl())) {
             return protocol.export(invoker);
         }
+        //其他每个协议都要构造Invoker的过滤器链，方便对每个调用执行做耗时、超时等统计
         return protocol.export(builder.buildInvokerChain(invoker, SERVICE_FILTER_KEY, CommonConstants.PROVIDER));
     }
 

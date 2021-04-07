@@ -76,8 +76,10 @@ public class ZookeeperServiceDiscovery extends AbstractServiceDiscovery {
     public void initialize(URL registryURL) throws Exception {
         this.registryURL = registryURL;
         this.curatorFramework = buildCuratorFramework(registryURL);
+        //rootPath=/services
         this.rootPath = ROOT_PATH.getParameterValue(registryURL);
         this.serviceDiscovery = buildServiceDiscovery(curatorFramework, rootPath);
+        //ServiceDiscoveryImpl.start()
         this.serviceDiscovery.start();
     }
 

@@ -121,6 +121,8 @@ public class ZookeeperRegistry extends CacheableFailbackRegistry {
     @Override
     public void doRegister(URL url) {
         try {
+            //zk路径为：/dubbo/org.apache.dubbo.demo.GreetingService/providers/
+            // dubbo%3A%2F%2F192.168.2.3%3A20880%2Forg.apache.dubbo.demo.GreetingService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic%3Dtrue%26generic%3Dfalse%26group%3Dgreeting%26interface%3Dorg.apache.dubbo.demo.GreetingService%26mapping-type%3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3Dhello%26pid%3D32047%26release%3D%26revision%3D1.0.0%26side%3Dprovider%26timeout%3D5000%26timestamp%3D1617177516265%26version%3D1.0.0
             zkClient.create(toUrlPath(url), url.getParameter(DYNAMIC_KEY, true));
         } catch (Throwable e) {
             throw new RpcException("Failed to register " + url + " to zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);

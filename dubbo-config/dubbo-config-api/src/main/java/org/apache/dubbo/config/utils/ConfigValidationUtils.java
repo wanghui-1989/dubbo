@@ -175,6 +175,7 @@ public class ConfigValidationUtils {
         // check && override if necessary
         List<URL> registryList = new ArrayList<URL>();
         ApplicationConfig application = interfaceConfig.getApplication();
+        //<dubbo:registry address="zookeeper://127.0.0.1:2181" protocol="zookeeper" port="2181" />
         List<RegistryConfig> registries = interfaceConfig.getRegistries();
         if (CollectionUtils.isNotEmpty(registries)) {
             for (RegistryConfig config : registries) {
@@ -191,16 +192,36 @@ public class ConfigValidationUtils {
                     if (!map.containsKey(PROTOCOL_KEY)) {
                         map.put(PROTOCOL_KEY, DUBBO_PROTOCOL);
                     }
+
+                    //入参map={"mapping-type":"metadata","release":"","qos.port":"22222",
+                    //"dubbo":"2.0.2","pid":"23909","path":"org.apache.dubbo.registry.RegistryService",
+                    //"mapping.type":"metadata","protocol":"zookeeper","metadata-type":"remote",
+                    //"application":"demo-provider","port":"2181","id":"registry1","timestamp":"1615863763659"}
+
+                    //解析后的url=zookeeper://127.0.0.1:2181/org.apache.dubbo.registry
+                    // .RegistryService?application=demo-provider&dubbo=2.0.2&id=registry1
+                    // &mapping-type=metadata&mapping.type=metadata
+                    // &metadata-type=remote&pid=23909&qos.port=22222&timestamp=1615863763659
                     List<URL> urls = UrlUtils.parseURLs(address, map);
 
                     for (URL url : urls) {
 
                         url = URLBuilder.from(url)
+                                //此时协议protoco=zookeeper
                                 .addParameter(REGISTRY_KEY, url.getProtocol())
+                                //对于提供方这里将url协议头改为registry，表示服务注册。
+                                //对于消费方将协议头改为service-discovery-registry，表示服务发现。
+                                //改完后=registry://127.0.0.1:2181/org.apache.dubbo
+                                //.registry.RegistryService?application=demo-provider&dubbo=2.0.2&id=registry1&mapping-type=metadata
+                                //&mapping.type=metadata&metadata-type=remote&pid=23942&qos.port=22222&registry=zookeeper&timestamp=1615864683452
+                                //注册类型RegistryType有两种：一个是服务发现类型，一个是注册类型，根据url中的某个字段来判断。
                                 .setProtocol(extractRegistryType(url))
                                 .build();
                         if ((provider && url.getParameter(REGISTER_KEY, true))
                                 || (!provider && url.getParameter(SUBSCRIBE_KEY, true))) {
+                            //是服务提供者 并且 url中register为空或者为true
+                            //或者 不是服务提供者 并且 url中的subscribe为空或者为true
+                            //将url添加到需要注册的list中
                             registryList.add(url);
                         }
                     }
@@ -210,6 +231,7 @@ public class ConfigValidationUtils {
         return genCompatibleRegistries(registryList, provider);
     }
 
+    //Compatible:兼容的
     private static List<URL> genCompatibleRegistries(List<URL> registryList, boolean provider) {
         List<URL> result = new ArrayList<>(registryList.size());
         registryList.forEach(registryURL -> {
@@ -545,6 +567,20 @@ public class ConfigValidationUtils {
         }
     }
 
+    /**
+     * 判断服务注册类型，如果url中registry-type的值是service，
+     *
+     * 则为服务发现类型(service-discovery-registry)，否则为服务注册类型(registry)
+     * 相当于提供方为registry，消费方为service-discovery-registry。提供方注册，消费方发现。
+     *
+     * provider:<dubbo:registry id="registry1" address="zookeeper://127.0.0.1:2181"/>
+     * consumer:<dubbo:registry address="zookeeper://127.0.0.1:2181?registry-type=service"/>
+     *
+     * 消费者测配置的注册中心用途是服务发现registry-type=service。
+     *
+     * @param url
+     * @return
+     */
     private static String extractRegistryType(URL url) {
         return UrlUtils.hasServiceDiscoveryRegistryTypeKey(url) ? SERVICE_REGISTRY_PROTOCOL : getRegistryProtocolType(url);
     }

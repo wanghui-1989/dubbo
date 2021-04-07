@@ -24,6 +24,64 @@ import static org.apache.dubbo.rpc.Constants.PROXY_KEY;
 
 /**
  * ProxyFactory. (API/SPI, Singleton, ThreadSafe)
+ * 默认是javassist
+ *
+ * 生成的自适应类源码：
+ * package org.apache.dubbo.rpc;
+ *
+ * import org.apache.dubbo.common.URL;
+ * import org.apache.dubbo.common.extension.ExtensionLoader;
+ * import org.apache.dubbo.rpc.Invoker;
+ * import org.apache.dubbo.rpc.ProxyFactory;
+ * import org.apache.dubbo.rpc.RpcException;
+ *
+ * public class ProxyFactory$Adaptive implements ProxyFactory {
+ *     public Object getProxy(Invoker invoker) throws RpcException {
+ *         if (invoker == null) {
+ *             throw new IllegalArgumentException("org.apache.dubbo.rpc.Invoker argument == null");
+ *         }
+ *         if (invoker.getUrl() == null) {
+ *             throw new IllegalArgumentException("org.apache.dubbo.rpc.Invoker argument getUrl() == null");
+ *         }
+ *         URL uRL = invoker.getUrl();
+ *         String string = uRL.getParameter("proxy", "javassist");
+ *         if (string == null) {
+ *             throw new IllegalStateException(new StringBuffer().append("Failed to get extension (org.apache.dubbo.rpc.ProxyFactory) name from url (").append(uRL.toString()).append(") use keys([proxy])").toString());
+ *         }
+ *         ProxyFactory proxyFactory = (ProxyFactory)ExtensionLoader.getExtensionLoader(ProxyFactory.class).getExtension(string);
+ *         return proxyFactory.getProxy(invoker);
+ *     }
+ *
+ *     public Object getProxy(Invoker invoker, boolean bl) throws RpcException {
+ *         if (invoker == null) {
+ *             throw new IllegalArgumentException("org.apache.dubbo.rpc.Invoker argument == null");
+ *         }
+ *         if (invoker.getUrl() == null) {
+ *             throw new IllegalArgumentException("org.apache.dubbo.rpc.Invoker argument getUrl() == null");
+ *         }
+ *         URL uRL = invoker.getUrl();
+ *         String string = uRL.getParameter("proxy", "javassist");
+ *         if (string == null) {
+ *             throw new IllegalStateException(new StringBuffer().append("Failed to get extension (org.apache.dubbo.rpc.ProxyFactory) name from url (").append(uRL.toString()).append(") use keys([proxy])").toString());
+ *         }
+ *         ProxyFactory proxyFactory = (ProxyFactory)ExtensionLoader.getExtensionLoader(ProxyFactory.class).getExtension(string);
+ *         return proxyFactory.getProxy(invoker, bl);
+ *     }
+ *
+ *     public Invoker getInvoker(Object object, Class clazz, URL uRL) throws RpcException {
+ *         if (uRL == null) {
+ *             throw new IllegalArgumentException("url == null");
+ *         }
+ *         URL uRL2 = uRL;
+ *         String string = uRL2.getParameter("proxy", "javassist");
+ *         if (string == null) {
+ *             throw new IllegalStateException(new StringBuffer().append("Failed to get extension (org.apache.dubbo.rpc.ProxyFactory) name from url (").append(uRL2.toString()).append(") use keys([proxy])").toString());
+ *         }
+ *         ProxyFactory proxyFactory = (ProxyFactory)ExtensionLoader.getExtensionLoader(ProxyFactory.class).getExtension(string);
+ *         return proxyFactory.getInvoker(object, clazz, uRL);
+ *     }
+ * }
+ *
  */
 @SPI("javassist")
 public interface ProxyFactory {
@@ -50,9 +108,14 @@ public interface ProxyFactory {
      * create invoker.
      *
      * @param <T>
-     * @param proxy
-     * @param type
-     * @param url
+     * @param proxy 如：GreetingServiceImpl对象，即ref对象
+     * @param type 如：interface org.apache.dubbo.demo.GreetingService
+     * @param url 如：injvm://127.0.0.1/org.apache.dubbo.demo.GreetingService
+     *            ?anyhost=true&application=demo-provider&bind.ip=192.168.2.3&bind.port=20880
+     *            &deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+     *            &interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata
+     *            &mapping.type=metadata&metadata-type=remote&methods=hello&pid=25062&qos.port=22222
+     *            &release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1615949370199&version=1.0.0
      * @return invoker
      */
     @Adaptive({PROXY_KEY})

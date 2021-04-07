@@ -96,8 +96,13 @@ public class ServiceDiscoveryRegistry implements Registry {
     private URL registryURL;
 
     public ServiceDiscoveryRegistry(URL registryURL) {
+        //registryURL=zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+        // ?application=demo-consumer&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true
+        // &id=org.apache.dubbo.config.RegistryConfig&interface=org.apache.dubbo.registry.RegistryService
+        // &mapping-type=metadata&mapping.type=metadata&pid=35523&qos.port=33333&registry-type=service&timestamp=1617693636877
         this.registryURL = registryURL;
         this.serviceDiscovery = createServiceDiscovery(registryURL);
+        //InMemoryWritableMetadataService
         this.writableMetadataService = WritableMetadataService.getDefaultExtension();
     }
 
@@ -112,6 +117,7 @@ public class ServiceDiscoveryRegistry implements Registry {
      * @return non-null
      */
     protected ServiceDiscovery createServiceDiscovery(URL registryURL) {
+        //为ZookeeperServiceDiscovery
         ServiceDiscovery originalServiceDiscovery = getServiceDiscovery(registryURL);
         ServiceDiscovery serviceDiscovery = enhanceEventPublishing(originalServiceDiscovery);
         execute(() -> {
@@ -134,6 +140,7 @@ public class ServiceDiscoveryRegistry implements Registry {
      * @return
      */
     private ServiceDiscovery getServiceDiscovery(URL registryURL) {
+        //返回ZookeeperServiceDiscoveryFactory
         ServiceDiscoveryFactory factory = getExtension(registryURL);
         return factory.getServiceDiscovery(registryURL);
     }
@@ -222,6 +229,14 @@ public class ServiceDiscoveryRegistry implements Registry {
         writableMetadataService.subscribeURL(url);
 
         boolean check = url.getParameter(CHECK_KEY, false);
+        //url=consumer://192.168.2.3/org.apache.dubbo.demo.DemoService?REGISTRY_CLUSTER=org.apache.dubbo
+        //.config.RegistryConfig&application=demo-consumer&category=providers,configurators,routers
+        // &check=true&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true&init=false
+        // &interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&mapping.type=metadata
+        // &metadata-type=remote&methods=sayHello,sayHelloAsync&pid=35642&provided-by=demo-provider
+        // &qos.port=33333&side=consumer&sticky=false&timestamp=1617699039824
+
+        //serviceNames=["demo-provider"]
         Set<String> serviceNames = writableMetadataService.getCachedMapping(url);
 
         if (CollectionUtils.isEmpty(serviceNames)) {

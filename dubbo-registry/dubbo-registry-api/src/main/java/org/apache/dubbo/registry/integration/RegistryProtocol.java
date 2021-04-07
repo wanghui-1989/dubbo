@@ -192,15 +192,48 @@ public class RegistryProtocol implements Protocol {
 
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
+        //orginInvoker的url=registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+        // ?application=demo-provider&dubbo=2.0.2&export=dubbo%3A%2F%2F192.168.2.3%3A20880
+        // %2Forg.apache.dubbo.demo.GreetingService%3Fanyhost%3Dtrue%26application%3Ddemo-provider
+        // %26bind.ip%3D192.168.2.3%26bind.port%3D20880%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic
+        // %3Dtrue%26generic%3Dfalse%26group%3Dgreeting%26interface%3Dorg.apache.dubbo.demo.GreetingService
+        // %26mapping-type%3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3Dhello
+        // %26pid%3D29191%26qos.port%3D22222%26release%3D%26revision%3D1.0.0%26side%3Dprovider%26timeout
+        // %3D5000%26timestamp%3D1616142621814%26version%3D1.0.0&id=registry1&mapping-type=metadata
+        // &mapping.type=metadata&metadata-type=remote&pid=29191&qos.port=22222&registry=zookeeper
+        // &timestamp=1616142616798
         URL registryUrl = getRegistryUrl(originInvoker);
+
+        //此时registryUrl=zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+        // ?application=demo-provider&dubbo=2.0.2&export=dubbo%3A%2F%2F192.168.2.3%3A20880
+        // %2Forg.apache.dubbo.demo.GreetingService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26bind.ip
+        // %3D192.168.2.3%26bind.port%3D20880%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic%3Dtrue%26generic
+        // %3Dfalse%26group%3Dgreeting%26interface%3Dorg.apache.dubbo.demo.GreetingService%26mapping-type
+        // %3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3Dhello%26pid%3D29257
+        // %26qos.port%3D22222%26release%3D%26revision%3D1.0.0%26side%3Dprovider%26timeout%3D5000%26timestamp
+        // %3D1616143071609%26version%3D1.0.0&id=registry1&mapping-type=metadata&mapping.type=metadata
+        // &metadata-type=remote&pid=29257&qos.port=22222&timestamp=1616143066590
         // url to export locally
         URL providerUrl = getProviderUrl(originInvoker);
+
+        //此时providerUrl=dubbo://192.168.2.3:20880/org.apache.dubbo.demo.GreetingService?anyhost=true
+        // &application=demo-provider&bind.ip=192.168.2.3&bind.port=20880&deprecated=false&dubbo=2.0.2
+        // &dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService
+        // &mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=hello&pid=29257
+        // &qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1616143071609&version=1.0.0
 
         // Subscribe the override data
         // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call
         //  the same service. Because the subscribed is cached key with the name of the service, it causes the
         //  subscription information to cover.
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);
+        //此时overrideSubscribeUrl=provider://192.168.2.3:20880/org.apache.dubbo.demo.GreetingService
+        // ?anyhost=true&application=demo-provider&bind.ip=192.168.2.3&bind.port=20880&category=configurators
+        // &check=false&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+        // &interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata
+        // &metadata-type=remote&methods=hello&pid=29257&qos.port=22222&release=&revision=1.0.0&side=provider
+        // &timeout=5000&timestamp=1616143071609&version=1.0.0
+
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
 
@@ -215,6 +248,7 @@ public class RegistryProtocol implements Protocol {
         // decide if we need to delay publish
         boolean register = providerUrl.getParameter(REGISTER_KEY, true);
         if (register) {
+            //向配置中心如zk，注册服务
             register(registry, registeredProviderUrl);
         }
 
@@ -244,7 +278,13 @@ public class RegistryProtocol implements Protocol {
     }
 
     private URL overrideUrlWithConfig(URL providerUrl, OverrideListener listener) {
+        //providerUrl=dubbo://192.168.2.3:20880/org.apache.dubbo.demo.GreetingService?anyhost=true
+        // &application=demo-provider&bind.ip=192.168.2.3&bind.port=20880&deprecated=false&dubbo=2.0.2
+        // &dynamic=true&generic=false&group=greeting&interface=org.apache.dubbo.demo.GreetingService
+        // &mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=hello&pid=29257
+        // &qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000&timestamp=1616143071609&version=1.0.0
         providerUrl = providerConfigurationListener.overrideUrl(providerUrl);
+        //做的是用配置中的数据覆盖url对应的值
         ServiceConfigurationListener serviceConfigurationListener = new ServiceConfigurationListener(providerUrl, listener);
         serviceConfigurationListeners.put(providerUrl.getServiceKey(), serviceConfigurationListener);
         return serviceConfigurationListener.overrideUrl(providerUrl);
@@ -252,6 +292,7 @@ public class RegistryProtocol implements Protocol {
 
     @SuppressWarnings("unchecked")
     private <T> ExporterChangeableWrapper<T> doLocalExport(final Invoker<T> originInvoker, URL providerUrl) {
+        //取的是url中的export地址url解码后的值作为key
         String key = getCacheKey(originInvoker);
 
         return (ExporterChangeableWrapper<T>) bounds.computeIfAbsent(key, s -> {
@@ -410,7 +451,24 @@ public class RegistryProtocol implements Protocol {
      * @return
      */
     private URL getProviderUrl(final Invoker<?> originInvoker) {
+        //此时url=zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+        // ?application=demo-provider&dubbo=2.0.2&export=dubbo%3A%2F%2F192.168.2.3%3A20880
+        // %2Forg.apache.dubbo.demo.GreetingService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26bind.ip
+        // %3D192.168.2.3%26bind.port%3D20880%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic%3Dtrue%26generic
+        // %3Dfalse%26group%3Dgreeting%26interface%3Dorg.apache.dubbo.demo.GreetingService%26mapping-type
+        // %3Dmetadata%26mapping.type%3Dmetadata%26metadata-type%3Dremote%26methods%3Dhello%26pid%3D29257
+        // %26qos.port%3D22222%26release%3D%26revision%3D1.0.0%26side%3Dprovider%26timeout%3D5000%26timestamp
+        // %3D1616143071609%26version%3D1.0.0&id=registry1&mapping-type=metadata&mapping.type=metadata
+        // &metadata-type=remote&pid=29257&qos.port=22222&timestamp=1616143066590
+
+        //这里是提取url中的export=dubbo...部分，即导出的服务
         Object providerURL = originInvoker.getUrl().getAttribute(EXPORT_KEY);
+        //此时export=dubbo://192.168.2.3:20880/org.apache.dubbo.demo
+        // .GreetingService?anyhost=true&application=demo-provider&bind.ip=192.168.2.3&bind.port=20880
+        // &deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+        // &interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata
+        // &metadata-type=remote&methods=hello&pid=29257&qos.port=22222&release=&revision=1.0.0&side=provider
+        // &timeout=5000&timestamp=1616143071609&version=1.0.0
         if (!(providerURL instanceof URL)) {
             throw new IllegalArgumentException("The registry export url is null! registry: " + originInvoker.getUrl().getAddress());
         }
@@ -433,6 +491,7 @@ public class RegistryProtocol implements Protocol {
     @SuppressWarnings("unchecked")
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         url = getRegistryUrl(url);
+        //此时自适应的RegistryFactory为ServiceDiscoveryRegistryFactory
         Registry registry = registryFactory.getRegistry(url);
         if (RegistryService.class.equals(type)) {
             return proxyFactory.getInvoker((T) registry, type, url);
@@ -452,6 +511,10 @@ public class RegistryProtocol implements Protocol {
     }
 
     protected <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url, Map<String, String> parameters) {
+        //consumerUrl=consumer://192.168.2.3/org.apache.dubbo.demo.DemoService?application=demo-consumer&check=true
+        //&dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true&init=false&interface=org.apache.dubbo.demo.DemoService
+        //&mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=sayHello,sayHelloAsync&pid=35572
+        //&provided-by=demo-provider&qos.port=33333&side=consumer&sticky=false&timestamp=1617695095106
         URL consumerUrl = new URL(parameters.get(PROTOCOL_KEY) == null ? DUBBO : parameters.get(PROTOCOL_KEY), parameters.get(REGISTER_IP_KEY), 0, getPath(parameters, type), parameters);
         url = url.putAttribute(CONSUMER_URL_KEY, consumerUrl);
         ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);
@@ -517,7 +580,16 @@ public class RegistryProtocol implements Protocol {
     }
 
     public static URL toSubscribeUrl(URL url) {
+        //入参url=consumer://192.168.2.3/org.apache.dubbo.demo.DemoService?application=demo-consumer&check=true
+        // &dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true&init=false&interface=org.apache.dubbo.demo.DemoService
+        // &mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=sayHello,sayHelloAsync&pid=35642
+        // &provided-by=demo-provider&qos.port=33333&side=consumer&sticky=false&timestamp=1617699039824
         return url.addParameter(CATEGORY_KEY, ALL_CATEGORIES);
+        //此时url=consumer://192.168.2.3/org.apache.dubbo.demo.DemoService?application=demo-consumer
+        // &category=providers,configurators,routers&check=true
+        // &dubbo=2.0.2&enable-auto-migration=true&enable.auto.migration=true&init=false&interface=org.apache.dubbo.demo.DemoService
+        // &mapping-type=metadata&mapping.type=metadata&metadata-type=remote&methods=sayHello,sayHelloAsync&pid=35642
+        // &provided-by=demo-provider&qos.port=33333&side=consumer&sticky=false&timestamp=1617699039824
     }
 
     protected List<RegistryProtocolListener> findRegistryProtocolListeners(URL url) {
@@ -752,7 +824,18 @@ public class RegistryProtocol implements Protocol {
 
         private final Invoker<T> originInvoker;
         private Exporter<T> exporter;
+        //同一个服务subscribeUrl为：dubbo://192.168.2.3:20880/org.apache.dubbo.demo.GreetingService
+        //?anyhost=true&application=demo-provider&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false
+        //&group=greeting&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata
+        //&metadata-type=remote&methods=hello&pid=32515&release=&revision=1.0.0&side=provider&timeout=5000
+        //&timestamp=1617256280291&version=1.0.0
         private URL subscribeUrl;
+        //同一个服务registerUrl为：provider://192.168.2.3:20880/org.apache.dubbo.demo.GreetingService
+        //?anyhost=true&application=demo-provider&bind.ip=192.168.2.3&bind.port=20880&category=configurators
+        //&check=false&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&group=greeting
+        //&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata&mapping.type=metadata&metadata-type=remote
+        //&methods=hello&pid=32515&qos.port=22222&release=&revision=1.0.0&side=provider&timeout=5000
+        //&timestamp=1617256280291&version=1.0.0
         private URL registerUrl;
 
         public ExporterChangeableWrapper(Exporter<T> exporter, Invoker<T> originInvoker) {

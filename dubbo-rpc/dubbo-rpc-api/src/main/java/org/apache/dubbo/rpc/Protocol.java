@@ -25,6 +25,71 @@ import java.util.List;
 
 /**
  * Protocol. (API/SPI, Singleton, ThreadSafe)
+ * 说下为什么很多支持SPI的接口都需要生成自适应类对象？
+ * dubbo框架开发了一个功能：调用getAdaptiveExtension()，返回配置url中与某个key对应的扩展实现对象。具体实现就是取url中的值，
+ * 再去加载或者去找对应的对象。这个具体的实现代码就是为每个SPI接口动态生成的自适应类对象的内部逻辑。
+ * 也就是每一个SPI接口都会动态生成一个自适应类对象，主要作用就是解析url，返回配置的对应对象或者默认对象。
+ *
+ * 对Protocol,Exporter,Invoker的关系总结，详见AbstractProtocol。
+ *
+ * spi扩展加载的时候，如果调用getAdaptiveExtension()方法，会取接口头部@SPI("我是默认扩展名称")的value值，
+ * 作为动态生成的自适应类中String string = uRL.getParameter("proxy", "我是默认扩展名称");的名称获取返回对应的扩展类。
+ * 例如Protocol生成的自适应代理类Protocol$Adaptive源码如下：
+ * package org.apache.dubbo.rpc;
+ *
+ * import java.util.List;
+ * import org.apache.dubbo.common.URL;
+ * import org.apache.dubbo.common.extension.ExtensionLoader;
+ * import org.apache.dubbo.rpc.Exporter;
+ * import org.apache.dubbo.rpc.Invoker;
+ * import org.apache.dubbo.rpc.Protocol;
+ * import org.apache.dubbo.rpc.RpcException;
+ *
+ * public class Protocol$Adaptive implements Protocol {
+ *     public void destroy() {
+ *         throw new UnsupportedOperationException("The method public abstract void org.apache.dubbo.rpc.Protocol.destroy() of interface org.apache.dubbo.rpc.Protocol is not adaptive method!");
+ *     }
+ *
+ *     public int getDefaultPort() {
+ *         throw new UnsupportedOperationException("The method public abstract int org.apache.dubbo.rpc.Protocol.getDefaultPort() of interface org.apache.dubbo.rpc.Protocol is not adaptive method!");
+ *     }
+ *
+ *     public List getServers() {
+ *         throw new UnsupportedOperationException("The method public default java.util.List org.apache.dubbo.rpc.Protocol.getServers() of interface org.apache.dubbo.rpc.Protocol is not adaptive method!");
+ *     }
+ *
+ *     public Exporter export(Invoker invoker) throws RpcException {
+ *         String string;
+ *         if (invoker == null) {
+ *             throw new IllegalArgumentException("org.apache.dubbo.rpc.Invoker argument == null");
+ *         }
+ *         if (invoker.getUrl() == null) {
+ *             throw new IllegalArgumentException("org.apache.dubbo.rpc.Invoker argument getUrl() == null");
+ *         }
+ *         URL uRL = invoker.getUrl();
+ *         *注意Protocol比较特别，url默认有这个属性，所以直接调用getProtocol()方法获取，其他的不一样
+ *         String string2 = string = uRL.getProtocol() == null ? "dubbo" : uRL.getProtocol();
+ *         if (string == null) {
+ *             throw new IllegalStateException(new StringBuffer().append("Failed to get extension (org.apache.dubbo.rpc.Protocol) name from url (").append(uRL.toString()).append(") use keys([protocol])").toString());
+ *         }
+ *         Protocol protocol = (Protocol)ExtensionLoader.getExtensionLoader(Protocol.class).getExtension(string);
+ *         return protocol.export(invoker);
+ *     }
+ *
+ *     public Invoker refer(Class clazz, URL uRL) throws RpcException {
+ *         String string;
+ *         if (uRL == null) {
+ *             throw new IllegalArgumentException("url == null");
+ *         }
+ *         URL uRL2 = uRL;
+ *         String string2 = string = uRL2.getProtocol() == null ? "dubbo" : uRL2.getProtocol();
+ *         if (string == null) {
+ *             throw new IllegalStateException(new StringBuffer().append("Failed to get extension (org.apache.dubbo.rpc.Protocol) name from url (").append(uRL2.toString()).append(") use keys([protocol])").toString());
+ *         }
+ *         Protocol protocol = (Protocol)ExtensionLoader.getExtensionLoader(Protocol.class).getExtension(string);
+ *         return protocol.refer(clazz, uRL);
+ *     }
+ * }
  */
 @SPI("dubbo")
 public interface Protocol {

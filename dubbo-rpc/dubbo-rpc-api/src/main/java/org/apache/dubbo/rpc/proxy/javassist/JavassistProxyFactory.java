@@ -38,7 +38,10 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
     @Override
     public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {
         // TODO Wrapper cannot handle this scenario correctly: the classname contains '$'
+        //为proxy(GreetingImpl)生成通用的包装类对象，具体的Wrapper类源码参见Wrapper.makeWrapper的注释
         final Wrapper wrapper = Wrapper.getWrapper(proxy.getClass().getName().indexOf('$') < 0 ? proxy.getClass() : type);
+        //这个Invoker的生成过程很像jdk动态代理的形式
+        //每个协议类型都会生成一个对应的invoker，如url开头为registry://xxx，或者dubbo://xxx等
         return new AbstractProxyInvoker<T>(proxy, type, url) {
             @Override
             protected Object doInvoke(T proxy, String methodName,

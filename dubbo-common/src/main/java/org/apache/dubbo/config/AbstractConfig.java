@@ -97,6 +97,13 @@ public abstract class AbstractConfig implements Serializable {
         return value;
     }
 
+    /**
+     * 如果类名以"Config", "Bean", "ConfigBase"结尾，
+     * 则截取出无后缀的类名部分，由驼峰格式转为配置的-连接格式
+     * 相当于解析类对应的配置文件名称
+     * @param cls
+     * @return
+     */
     public static String getTagName(Class<?> cls) {
         String tag = cls.getSimpleName();
         for (String suffix : SUFFIXES) {
@@ -514,6 +521,7 @@ public abstract class AbstractConfig implements Serializable {
     @Override
     public String toString() {
         try {
+            //<dubbo:service beanName="org.apache.dubbo.demo.GreetingService" />
             StringBuilder buf = new StringBuilder();
             buf.append("<dubbo:");
             buf.append(getTagName(getClass()));

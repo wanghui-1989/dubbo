@@ -66,6 +66,9 @@ public class ConfigManager extends LifecycleAdapter implements FrameworkExt {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigManager.class);
 
+    //config=org.apache.dubbo.config.context.ConfigManager
+    //environment=org.apache.dubbo.common.config.Environment
+    //repository=org.apache.dubbo.rpc.model.ServiceRepository
     public static final String NAME = "config";
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -434,6 +437,13 @@ public class ConfigManager extends LifecycleAdapter implements FrameworkExt {
         });
     }
 
+    /**
+     * 根据入参配置文件名称，从缓存中拿对应的配置
+     * @param configType
+     * @param <C>
+     * @return
+     * @throws IllegalStateException
+     */
     protected <C extends AbstractConfig> C getConfig(String configType) throws IllegalStateException {
         return read(() -> {
             Map<String, C> configsMap = (Map) configsCache.getOrDefault(configType, emptyMap());

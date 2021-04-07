@@ -140,6 +140,7 @@ public class ClassUtils {
     public static ClassLoader getClassLoader(Class<?> clazz) {
         ClassLoader cl = null;
         try {
+            //顺序是先取当前线程的ClassLoader
             cl = Thread.currentThread().getContextClassLoader();
         } catch (Throwable ex) {
             // Cannot access thread context ClassLoader - falling back to system class loader...

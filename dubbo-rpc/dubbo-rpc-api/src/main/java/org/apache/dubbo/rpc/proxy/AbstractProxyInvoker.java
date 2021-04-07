@@ -82,6 +82,7 @@ public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
     public Result invoke(Invocation invocation) throws RpcException {
         try {
             Object value = doInvoke(proxy, invocation.getMethodName(), invocation.getParameterTypes(), invocation.getArguments());
+            //value本身可能就是CompletableFuture，或者需要异步执行，转为CompletableFuture
 			CompletableFuture<Object> future = wrapWithFuture(value);
             CompletableFuture<AppResponse> appResponseFuture = future.handle((obj, t) -> {
                 AppResponse result = new AppResponse();

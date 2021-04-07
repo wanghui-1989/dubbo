@@ -518,7 +518,11 @@ public class UrlUtils {
 
     /**
      * The specified parameters of {@link URL} is service discovery registry type or not
+     * 如果url中registry-type的值是服务发现类型service，返回true。
+     * provider:<dubbo:registry id="registry1" address="zookeeper://127.0.0.1:2181"/>
+     * consumer:<dubbo:registry address="zookeeper://127.0.0.1:2181?registry-type=service"/>
      *
+     * 消费者测配置的注册中心用途是服务发现registry-type=service。
      * @param parameters the parameters of {@link URL} that connects to the registry
      * @return If it is, return <code>true</code>, or <code>false</code>
      * @since 2.7.5

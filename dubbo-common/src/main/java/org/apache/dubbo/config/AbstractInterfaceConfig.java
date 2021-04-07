@@ -181,6 +181,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         convertRegistryIdsToRegistries();
 
         for (RegistryConfig registryConfig : registries) {
+            //registryConfig为<dubbo:registry address="zookeeper://127.0.0.1:2181
+            //?registry-type=service" protocol="zookeeper" port="2181" />
             if (!registryConfig.isValid()) {
                 throw new IllegalStateException("No registry config found or it's not a valid config! " +
                         "The registry config is: " + registryConfig);

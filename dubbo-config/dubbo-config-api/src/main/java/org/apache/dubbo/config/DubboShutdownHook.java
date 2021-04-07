@@ -89,9 +89,12 @@ public class DubboShutdownHook extends Thread {
      * Register the ShutdownHook
      */
     public void register() {
+        //只注册一次
         if (registered.compareAndSet(false, true)) {
             DubboShutdownHook dubboShutdownHook = getDubboShutdownHook();
+            //注册虚拟机关闭钩子
             Runtime.getRuntime().addShutdownHook(dubboShutdownHook);
+            //分发已注册事件
             dispatch(new DubboShutdownHookRegisteredEvent(dubboShutdownHook));
         }
     }

@@ -48,6 +48,7 @@ public class DubboBootstrapApplicationListener extends OneTimeExecutionApplicati
 
     @Override
     public void onApplicationContextEvent(ApplicationContextEvent event) {
+        //使用事件监听器的方式与spring集成
         if (event instanceof ContextRefreshedEvent) {
             onContextRefreshedEvent((ContextRefreshedEvent) event);
         } else if (event instanceof ContextClosedEvent) {
@@ -56,6 +57,7 @@ public class DubboBootstrapApplicationListener extends OneTimeExecutionApplicati
     }
 
     private void onContextRefreshedEvent(ContextRefreshedEvent event) {
+        //启动dubbo
         dubboBootstrap.start();
     }
 

@@ -39,12 +39,14 @@ public class ServiceDescriptor {
     private final Map<String, Map<String, MethodDescriptor>> descToMethods = new HashMap<>();
 
     public ServiceDescriptor(Class<?> interfaceClass) {
+        //要导出的服务接口
         this.serviceInterfaceClass = interfaceClass;
         this.serviceName = interfaceClass.getName();
         initMethods();
     }
 
     private void initMethods() {
+        //所有public方法
         Method[] methodsToExport = this.serviceInterfaceClass.getMethods();
         for (Method method : methodsToExport) {
             method.setAccessible(true);

@@ -192,6 +192,7 @@ public class DubboBootstrap extends GenericEventListener {
      * See {@link ApplicationModel} and {@link ExtensionLoader} for why DubboBootstrap is designed to be singleton.
      */
     public static DubboBootstrap getInstance() {
+        //双检锁，延迟加载
         if (instance == null) {
             synchronized (DubboBootstrap.class) {
                 if (instance == null) {
@@ -211,10 +212,13 @@ public class DubboBootstrap extends GenericEventListener {
     }
 
     private DubboBootstrap() {
+        //装载并返回对应的扩展对象
         configManager = ApplicationModel.getConfigManager();
         environment = ApplicationModel.getEnvironment();
 
+        //注册关闭钩子
         DubboShutdownHook.getDubboShutdownHook().register();
+        //添加钩子回调
         ShutdownHookCallbacks.INSTANCE.addCallback(new ShutdownHookCallback() {
             @Override
             public void callback() throws Throwable {
@@ -523,10 +527,12 @@ public class DubboBootstrap extends GenericEventListener {
      * Initialize
      */
     public void initialize() {
+        //只初始化一次
         if (!initialized.compareAndSet(false, true)) {
             return;
         }
 
+        //加载、初始化所有的spi扩展
         ApplicationModel.initFrameworkExts();
         
 
@@ -894,7 +900,7 @@ public class DubboBootstrap extends GenericEventListener {
             if (logger.isInfoEnabled()) {
                 logger.info(NAME + " is starting...");
             }
-            // 1. export Dubbo Services
+            // 1. 导出dubbo所有服务
             exportServices();
 
             // Not only provider register
@@ -1086,6 +1092,7 @@ public class DubboBootstrap extends GenericEventListener {
             serviceConfig.setBootstrap(this);
 
             if (exportAsync) {
+                //异步导出
                 ExecutorService executor = executorRepository.getServiceExporterExecutor();
                 Future<?> future = executor.submit(() -> {
                     sc.export();
@@ -1093,6 +1100,7 @@ public class DubboBootstrap extends GenericEventListener {
                 });
                 asyncExportingFutures.add(future);
             } else {
+                //同步导出
                 sc.export();
                 exportedServices.add(sc);
             }

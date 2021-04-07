@@ -79,8 +79,10 @@ public class ApplicationModel {
     private static final ExtensionLoader<FrameworkExt> LOADER = ExtensionLoader.getExtensionLoader(FrameworkExt.class);
 
     public static void initFrameworkExts() {
+        //加载所有的spi扩展，排序
         Set<FrameworkExt> exts = ExtensionLoader.getExtensionLoader(FrameworkExt.class).getSupportedExtensionInstances();
         for (FrameworkExt ext : exts) {
+            //执行初始化，一般为补充配置中心和环境数据
             ext.initialize();
         }
     }

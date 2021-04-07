@@ -38,11 +38,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * abstract ProtocolSupport.
+ *
+ * 总结下Protocol,Exporter,Invoker的关系。
+ * 1. Protocol是协议的意思，比如Dubbo、Injvm协议。一个服务要以某个协议的方式暴露出来，
+ * 即可以用这个协议来访问这个服务，如HelloService以http协议的方式暴露出来，也就是以后可以用http的方式访问这个服务。
+ * 2. Dubbo抽象出来一个Exporter的概念，负责如何暴露服务，如何取消服务暴露。
+ * 一个服务被暴露出来，需要知道它该怎么调用，就有了Invoker。Invoker负责实际的调用服务返回响应。
+ * 3. 综上，1个Protocol包含多个服务的Exporter，1个Exporter在大部分情况下只包含1个Invoker。
+ *
  */
 public abstract class AbstractProtocol implements Protocol {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
+    //该协议的所有导出者，即暴露的所有服务
+    //"greeting/org.apache.dubbo.demo.GreetingService:1.0.0:20880" -> DubboExporter对象
+    //"greeting/org.apache.dubbo.demo.GreetingService:1.0.0" -> InjvmExporter对象
     protected final Map<String, Exporter<?>> exporterMap = new ConcurrentHashMap<String, Exporter<?>>();
 
     /**
@@ -51,6 +62,7 @@ public abstract class AbstractProtocol implements Protocol {
     protected final Map<String, ProtocolServer> serverMap = new ConcurrentHashMap<>();
 
     //TODO SoftReference
+    //该协议暴露出来的所有调用者
     protected final Set<Invoker<?>> invokers = new ConcurrentHashSet<Invoker<?>>();
 
     protected static String serviceKey(URL url) {
