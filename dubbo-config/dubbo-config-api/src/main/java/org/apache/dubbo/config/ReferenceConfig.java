@@ -339,6 +339,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             }
         } else {
             urls.clear();
+            //url为配置的peer-to-peer调用地址，或者注册中心地址
+            //假如服务集群有5台机器，你只想测试调用其中的A,B两台机器，配置的就是直连提供者AB的地址
+            //<dubbo:reference id="as" interface="AService" url="dubbo://1.1.1.1:20890;第二提供者地址"/>
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
@@ -357,6 +360,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                     }
                 }
             } else { // assemble URL from register center's configuration
+                //从注册中心的配置中组装URL
                 // if protocols not injvm checkRegistry
                 if (!LOCAL_PROTOCOL.equalsIgnoreCase(getProtocol())) {
                     checkRegistry();
@@ -389,11 +393,15 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 }
             }
 
+            //就一个url
             if (urls.size() == 1) {
                 //url.protocol=service-discovery-registry，对应的protocol为：RegistryProtocol
                 //相当于RegistryProtocol对提供方来说负责服务注册，对于消费方来说负责服务引用。
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
             } else {
+                //多个url，可能是配置的点对点直连提供者url，或者注册中心url。
+                //假如是两个注册中心，这里的逻辑就是将多个注册中心注册的服务合并到一起，成为一个Directory，放入同一个ClusterInvoker，
+                //所以说dubbo不管是不是同一个注册中心，所有invoker一样对待。
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {
@@ -420,6 +428,10 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             logger.info("Referred dubbo service " + interfaceClass.getName());
         }
 
+        //consumer://192.168.2.3/org.apache.dubbo.demo.DemoService?application=demo-consumer&check=false&dubbo=2.0.2
+        // &init=false&interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&mapping.type=metadata
+        // &metadata-type=remote&methods=sayHello,sayHelloAsync&pid=38260&qos.port=33333&register.ip=192.168.2.3
+        // &release=&side=consumer&sticky=false&timestamp=1617937387027
         URL consumerURL = new URL(CONSUMER_PROTOCOL, map.get(REGISTER_IP_KEY), 0, map.get(INTERFACE_KEY), map);
         MetadataUtils.publishServiceDefinition(consumerURL);
 

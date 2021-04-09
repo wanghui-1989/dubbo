@@ -36,9 +36,189 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.apache.dubbo.common.constants.CommonConstants.MAX_PROXY_COUNT;
 
 /**
- * Proxy.
+ * getProxy(...)方法生成动态代理类的源码：
+ * package org.apache.dubbo.common.bytecode;
+ *
+ * import com.alibaba.dubbo.rpc.service.EchoService;
+ * import java.lang.reflect.InvocationHandler;
+ * import java.lang.reflect.Method;
+ * import java.util.Map;
+ * import java.util.Set;
+ * import java.util.SortedSet;
+ * import org.apache.dubbo.common.bytecode.ClassGenerator;
+ * import org.apache.dubbo.metadata.InstanceMetadataChangedListener;
+ * import org.apache.dubbo.metadata.MetadataInfo;
+ * import org.apache.dubbo.metadata.MetadataService;
+ * import org.apache.dubbo.rpc.service.Destroyable;
+ *
+ * //每个proxyX类的主要区别在于，实现的接口不同，如这个类实现了MetadataService接口
+ * public class proxy0 implements ClassGenerator.DC, Destroyable, EchoService, MetadataService {
+ *     public static Method[] methods;
+ *     private InvocationHandler handler;
+ *
+ *     public String version() {
+ *         Object[] objectArray = new Object[]{};
+ *         Object object = this.handler.invoke(this, methods[0], objectArray);
+ *         return (String)object;
+ *     }
+ *
+ *     public String serviceName() {
+ *         Object[] objectArray = new Object[]{};
+ *         Object object = this.handler.invoke(this, methods[1], objectArray);
+ *         return (String)object;
+ *     }
+ *
+ *     public SortedSet getSubscribedURLs() {
+ *         Object[] objectArray = new Object[]{};
+ *         Object object = this.handler.invoke(this, methods[2], objectArray);
+ *         return (SortedSet)object;
+ *     }
+ *
+ *     public SortedSet getExportedURLs(String string, String string2, String string3) {
+ *         Object[] objectArray = new Object[]{string, string2, string3};
+ *         Object object = this.handler.invoke(this, methods[3], objectArray);
+ *         return (SortedSet)object;
+ *     }
+ *
+ *     public SortedSet getExportedURLs(String string, String string2, String string3, String string4) {
+ *         Object[] objectArray = new Object[]{string, string2, string3, string4};
+ *         Object object = this.handler.invoke(this, methods[4], objectArray);
+ *         return (SortedSet)object;
+ *     }
+ *
+ *     public SortedSet getExportedURLs() {
+ *         Object[] objectArray = new Object[]{};
+ *         Object object = this.handler.invoke(this, methods[5], objectArray);
+ *         return (SortedSet)object;
+ *     }
+ *
+ *     public SortedSet getExportedURLs(String string) {
+ *         Object[] objectArray = new Object[]{string};
+ *         Object object = this.handler.invoke(this, methods[6], objectArray);
+ *         return (SortedSet)object;
+ *     }
+ *
+ *     public SortedSet getExportedURLs(String string, String string2) {
+ *         Object[] objectArray = new Object[]{string, string2};
+ *         Object object = this.handler.invoke(this, methods[7], objectArray);
+ *         return (SortedSet)object;
+ *     }
+ *
+ *     public Set getExportedServiceURLs() {
+ *         Object[] objectArray = new Object[]{};
+ *         Object object = this.handler.invoke(this, methods[8], objectArray);
+ *         return (Set)object;
+ *     }
+ *
+ *     public String getServiceDefinition(String string) {
+ *         Object[] objectArray = new Object[]{string};
+ *         Object object = this.handler.invoke(this, methods[9], objectArray);
+ *         return (String)object;
+ *     }
+ *
+ *     public String getServiceDefinition(String string, String string2, String string3) {
+ *         Object[] objectArray = new Object[]{string, string2, string3};
+ *         Object object = this.handler.invoke(this, methods[10], objectArray);
+ *         return (String)object;
+ *     }
+ *
+ *     public MetadataInfo getMetadataInfo(String string) {
+ *         Object[] objectArray = new Object[]{string};
+ *         Object object = this.handler.invoke(this, methods[11], objectArray);
+ *         return (MetadataInfo)object;
+ *     }
+ *
+ *     public Map getMetadataInfos() {
+ *         Object[] objectArray = new Object[]{};
+ *         Object object = this.handler.invoke(this, methods[12], objectArray);
+ *         return (Map)object;
+ *     }
+ *
+ *     public void exportInstanceMetadata(String string) {
+ *         Object[] objectArray = new Object[]{string};
+ *         Object object = this.handler.invoke(this, methods[13], objectArray);
+ *     }
+ *
+ *     public Map getInstanceMetadataChangedListenerMap() {
+ *         Object[] objectArray = new Object[]{};
+ *         Object object = this.handler.invoke(this, methods[14], objectArray);
+ *         return (Map)object;
+ *     }
+ *
+ *     public String getAndListenInstanceMetadata(String string, InstanceMetadataChangedListener instanceMetadataChangedListener) {
+ *         Object[] objectArray = new Object[]{string, instanceMetadataChangedListener};
+ *         Object object = this.handler.invoke(this, methods[15], objectArray);
+ *         return (String)object;
+ *     }
+ *
+ *     public Object $echo(Object object) {
+ *         Object[] objectArray = new Object[]{object};
+ *         Object object2 = this.handler.invoke(this, methods[16], objectArray);
+ *         return object2;
+ *     }
+ *
+ *     public void $destroy() {
+ *         Object[] objectArray = new Object[]{};
+ *         Object object = this.handler.invoke(this, methods[17], objectArray);
+ *     }
+ *
+ *     public proxy0() {
+ *     }
+ *
+ *     public proxy0(InvocationHandler invocationHandler) {
+ *         this.handler = invocationHandler;
+ *     }
+ * }
+ *
+ *
+ *
+ *
+ * //这个类实现了DemoService接口
+ * package org.apache.dubbo.common.bytecode;
+ *
+ * import com.alibaba.dubbo.rpc.service.EchoService;
+ * import java.lang.reflect.InvocationHandler;
+ * import java.lang.reflect.Method;
+ * import java.util.concurrent.CompletableFuture;
+ * import org.apache.dubbo.common.bytecode.ClassGenerator;
+ * import org.apache.dubbo.demo.DemoService;
+ * import org.apache.dubbo.rpc.service.Destroyable;
+ *
+ * public class proxy1 implements ClassGenerator.DC, Destroyable, EchoService, DemoService {
+ *     public static Method[] methods;
+ *     private InvocationHandler handler;
+ *
+ *     public String sayHello(String string) {
+ *         Object[] objectArray = new Object[] { string };
+ *         Object object = this.handler.invoke(this, methods[0], objectArray);
+ *         return (String) object;
+ *     }
+ *
+ *     public CompletableFuture sayHelloAsync(String string) {
+ *         Object[] objectArray = new Object[] { string };
+ *         Object object = this.handler.invoke(this, methods[1], objectArray);
+ *         return (CompletableFuture) object;
+ *     }
+ *
+ *     public Object $echo(Object object) {
+ *         Object[] objectArray = new Object[] { object };
+ *         Object object2 = this.handler.invoke(this, methods[2], objectArray);
+ *         return object2;
+ *     }
+ *
+ *     public void $destroy() {
+ *         Object[] objectArray = new Object[] {};
+ *         Object object = this.handler.invoke(this, methods[3], objectArray);
+ *     }
+ *
+ *     public proxy1() {
+ *     }
+ *
+ *     public proxy1(InvocationHandler invocationHandler) {
+ *         this.handler = invocationHandler;
+ *     }
+ * }
  */
-
 public abstract class Proxy {
     public static final InvocationHandler RETURN_NULL_INVOKER = (proxy, method, args) -> null;
     public static final InvocationHandler THROW_UNSUPPORTED_INVOKER = new InvocationHandler() {

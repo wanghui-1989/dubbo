@@ -69,9 +69,14 @@ public class InvokerInvocationHandler implements InvocationHandler {
             return invoker.equals(args[0]);
         }
         RpcInvocation rpcInvocation = new RpcInvocation(method, invoker.getInterface().getName(), protocolServiceKey, args);
+        //serviceKey=greeting/org.apache.dubbo.demo.GreetingService:1.0.0
         String serviceKey = url.getServiceKey();
         rpcInvocation.setTargetServiceUniqueName(serviceKey);
 
+        //url=dubbo://192.168.2.3/org.apache.dubbo.demo.GreetingService?application=demo-consumer&check=false&dubbo=2.0.2
+        // &group=greeting&init=false&interface=org.apache.dubbo.demo.GreetingService&mapping-type=metadata
+        // &mapping.type=metadata&metadata-type=remote&methods=hello&pid=38260&qos.port=33333&register.ip=192.168.2.3
+        // &release=&revision=1.0.0&side=consumer&sticky=false&timestamp=1617938135101&version=1.0.0
         // invoker.getUrl() returns consumer url.
         RpcContext.setRpcContext(url);
 
