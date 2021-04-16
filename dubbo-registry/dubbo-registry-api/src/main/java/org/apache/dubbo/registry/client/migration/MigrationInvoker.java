@@ -351,6 +351,9 @@ public class MigrationInvoker<T> implements MigrationClusterInvoker<T> {
             if (logger.isDebugEnabled()) {
                 logger.debug("Re-subscribing instance addresses, current interface " + type.getName());
             }
+            //url=service-discovery-registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+            //?REGISTRY_CLUSTER=org.apache.dubbo.config.RegistryConfig&application=demo-consumer&dubbo=2.0.2
+            //&mapping-type=metadata&pid=46367&qos.port=33333&registry=zookeeper&registry-type=service&timestamp=1618269507064
             serviceDiscoveryInvoker = registryProtocol.getServiceDiscoveryInvoker(cluster, registry, type, url);
         }
     }

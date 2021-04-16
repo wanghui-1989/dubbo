@@ -135,7 +135,7 @@ public class ServiceInstanceMetadataUtils {
 
     /**
      * The revision for all exported Dubbo services from the specified {@link ServiceInstance}.
-     *
+     * 指定ServiceInstance中所有导出的Dubbo服务的修订版。
      * @param serviceInstance the specified {@link ServiceInstance}
      * @return <code>null</code> if not exits
      */

@@ -114,7 +114,10 @@ public interface ServiceDiscovery extends Prioritized {
 
     /**
      * Gets all {@link ServiceInstance service instances} by the specified service name.
-     *
+     * 返回zk路径/services/demo-provider下的服务实例，如：
+     * /services/demo-provider
+     *                  /192.168.2.3:20880
+     *                  /192.168.2.3:20881
      * @param serviceName the service name
      * @return non-null {@link List}
      * @throws NullPointerException if <code>serviceName</code> is <code>null</code> is <code>null</code>

@@ -99,8 +99,12 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
             throw new IllegalArgumentException("registry serviceKey is null.");
         }
         this.serviceType = serviceType;
+        //serviceKey="org.apache.dubbo.demo.DemoService"
         this.serviceKey = super.getConsumerUrl().getServiceKey();
 
+        //consumerUrl=dubbo://127.0.0.1/org.apache.dubbo.demo.DemoService?application=demo-consumer&check=false&dubbo=2.0.2
+        //&interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&metadata-type=remote
+        //&methods=sayHello,sayHelloAsync&pid=46367&qos.port=33333&register.ip=127.0.0.1&release=&side=consumer&sticky=false&timestamp=1618269494367
         this.overrideDirectoryUrl = this.directoryUrl = consumerUrl;
         String group = directoryUrl.getGroup("");
         this.multiGroup = group != null && (ANY_VALUE.equals(group) || group.contains(","));
@@ -129,6 +133,10 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
 
     public void subscribe(URL url) {
         setConsumerUrl(url);
+        //url=dubbo://127.0.0.1/org.apache.dubbo.demo.DemoService?application=demo-consumer
+        //&category=providers,configurators,routers&check=false&dubbo=2.0.2&interface=org.apache.dubbo.demo.DemoService
+        // &mapping-type=metadata&metadata-type=remote&methods=sayHello,sayHelloAsync&pid=46367&qos.port=33333
+        // &release=&side=consumer&sticky=false&timestamp=1618269494367
         registry.subscribe(url, this);
     }
 

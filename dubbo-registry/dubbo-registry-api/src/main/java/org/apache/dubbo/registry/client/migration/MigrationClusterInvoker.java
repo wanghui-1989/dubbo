@@ -23,7 +23,7 @@ import org.apache.dubbo.rpc.cluster.ClusterInvoker;
 
 /**
  * FIXME, some methods need to be further optimized.
- *
+ * Migration:迁移
  * @param <T>
  */
 public interface MigrationClusterInvoker<T> extends ClusterInvoker<T> {

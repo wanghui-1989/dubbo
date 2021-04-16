@@ -53,6 +53,7 @@ import static org.apache.dubbo.common.constants.RegistryConstants.SUBSCRIBED_SER
 import static org.apache.dubbo.common.utils.CollectionUtils.isEmpty;
 import static org.apache.dubbo.common.utils.StringUtils.isBlank;
 
+//Migration:迁移、转移、改变
 @Activate
 public class MigrationRuleListener implements RegistryProtocolListener, ConfigurationListener {
     private static final Logger logger = LoggerFactory.getLogger(MigrationRuleListener.class);
@@ -128,19 +129,36 @@ public class MigrationRuleListener implements RegistryProtocolListener, Configur
 
     @Override
     public synchronized void onRefer(RegistryProtocol registryProtocol, ClusterInvoker<?> invoker, URL consumerUrl, URL registryURL) {
+        //consumerUrl=dubbo://127.0.0.1/org.apache.dubbo.demo.DemoService?application=demo-consumer&check=false
+        //&dubbo=2.0.2&interface=org.apache.dubbo.demo.DemoService&mapping-type=metadata&metadata-type=remote
+        //&methods=sayHello,sayHelloAsync&pid=46094&qos.port=33333&register.ip=127.0.0.1&release=&side=consumer
+        //&sticky=false&timestamp=1618267250346
+
+        //registryUrl=service-discovery-registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+        //?REGISTRY_CLUSTER=org.apache.dubbo.config.RegistryConfig&application=demo-consumer&dubbo=2.0.2
+        //&mapping-type=metadata&pid=46094&qos.port=33333&registry=zookeeper&registry-type=service&timestamp=1618267262937
+
         MigrationRuleHandler<?> migrationRuleHandler = handlers.computeIfAbsent(consumerUrl.getServiceKey() + consumerUrl.getParameter(TIMESTAMP_KEY), _key -> {
             return new MigrationRuleHandler<>((MigrationInvoker<?>)invoker, consumerUrl);
         });
 
         try {
+            //subscribedServices=["demo-provider"]
             Set<String> subscribedServices = getServices(registryURL, consumerUrl, migrationRuleHandler);
+            //ServiceNameMapping.buildMappingKey(consumerUrl)=mapping/org.apache.dubbo.demo.DemoService
+            //从这看对应zk的/dubbo/mapping/org.apache.dubbo.demo.DemoService路径
             WritableMetadataService.getDefaultExtension().putCachedMapping(ServiceNameMapping.buildMappingKey(consumerUrl), subscribedServices);
         } catch (Exception e) {
             logger.warn("Cannot find app mapping for service " + consumerUrl.getServiceInterface() + ", will not migrate.", e);
         }
 
+        //样例rawRule配置在dubbo-demo-xml-consumer/src/main/resources/dubbo-migration.yaml，内容为：
+        //key: demo-consumer
+        //step: FORCE_APPLICATION
+        //threshold: 0.1
         rule = parseRule(rawRule);
 
+        //迁移
         migrationRuleHandler.doMigrate(rule, false);
     }
 

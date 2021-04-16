@@ -46,6 +46,13 @@ import static org.apache.dubbo.common.constants.RegistryConstants.ZONE_KEY;
  * 2. check the zone the current request belongs, pick the registry that has the same zone first.
  * 3. Evenly balance traffic between all registries based on each registry's weight.
  * 4. Pick anyone that's available.
+ *
+ * 如果有多个注册中心进行订阅。
+ * 该扩展提供了一种决定如何在其中分配流量的策略：
+ * 1.标记为“ preferred = true”的注册中心具有最高优先级。
+ * 2.检查当前请求所属的区域，首先选择具有相同区域的注册中心。
+ * 3.根据每个注册管理机构的权重，在所有注册管理机构之间平均分配流量。
+ * 4.选择任何有空的人。
  */
 public class ZoneAwareClusterInvoker<T> extends AbstractClusterInvoker<T> {
 

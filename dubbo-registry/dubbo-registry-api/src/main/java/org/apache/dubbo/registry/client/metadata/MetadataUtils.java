@@ -141,7 +141,7 @@ public class MetadataUtils {
         // Simply rely on the first metadata url, as stated in MetadataServiceURLBuilder.
         Invoker<MetadataService> invoker = protocol.refer(MetadataService.class, urls.get(0));
         metadataServiceInvokers.put(key, invoker);
-
+        //通过JavassistProxyFactory生成org.apache.dubbo.common.bytecode.proxy+数字类型的代理对象实例返回。
         return proxyFactory.getProxy(invoker);
     }
 

@@ -107,18 +107,25 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
      * <p>
      * Actually，when the {@link ExtensionLoader} init the {@link Protocol} instants,it will automatically wraps two
      * layers, and eventually will get a <b>ProtocolFilterWrapper</b> or <b>ProtocolListenerWrapper</b>
+     *
+     * 根据url协议类型决定
+     * url=registry://xxx，对应RegistryProtocol
+     * url=dubbo://xxx，对应DubboProtocol
+     * url=injvm://xxx，对应InjvmProtocol。
      */
     private static final Protocol REF_PROTOCOL = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
 
     /**
      * The {@link Cluster}'s implementation with adaptive functionality, and actually it will get a {@link Cluster}'s
      * specific implementation who is wrapped with <b>MockClusterInvoker</b>
+     * 缺省FailoverCluster
      */
     private static final Cluster CLUSTER = ExtensionLoader.getExtensionLoader(Cluster.class).getAdaptiveExtension();
 
     /**
      * A {@link ProxyFactory} implementation that will generate a reference service's proxy,the JavassistProxyFactory is
      * its default implementation
+     * 缺省JavassistProxyFactory
      */
     private static final ProxyFactory PROXY_FACTORY = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
 
@@ -128,7 +135,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     private transient volatile T ref;
 
     /**
-     * The invoker of the reference service
+     * The invoker of the reference servicein
+     * ClusterInvoker类型
      */
     private transient volatile Invoker<?> invoker;
 
@@ -330,14 +338,17 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
+        //从配置中找出是否应该引用同一JVM中的服务。默认行为为true
         if (shouldJvmRefer(map)) {
-            //injvm本地引用
+            //url=injvm://xxx
             URL url = new URL(LOCAL_PROTOCOL, LOCALHOST_VALUE, 0, interfaceClass.getName()).addParameters(map);
+            //InjvmProtocol.refer返回InjvmInvoker类型
             invoker = REF_PROTOCOL.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
         } else {
+            //远程引用
             urls.clear();
             //url为配置的peer-to-peer调用地址，或者注册中心地址
             //假如服务集群有5台机器，你只想测试调用其中的A,B两台机器，配置的就是直连提供者AB的地址
@@ -393,15 +404,21 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 }
             }
 
-            //就一个url
             if (urls.size() == 1) {
+                //一个服务只有一个url，有两种情况：1.只有一个注册中心；2.直连一个提供者。
                 //url.protocol=service-discovery-registry，对应的protocol为：RegistryProtocol
                 //相当于RegistryProtocol对提供方来说负责服务注册，对于消费方来说负责服务引用。
+                //RegistryProtocol返回的invoker一定是ClusterInvoker子类型，如果url是一个注册中心(即service-discovery-registry)，
+                //dubbo会读取订阅服务在注册中心注册的所有提供者，转为一个个普通Invoker，集合成Directory类型，set到返回的ClusterInvoker子类型中。
+                //如果是直连一个提供者也是类似的情况，同一个注册中心的所有服务提供者就是同一个集群，一个直连提供者也是一个集群，只不过只有一台机器。
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
             } else {
-                //多个url，可能是配置的点对点直连提供者url，或者注册中心url。
-                //假如是两个注册中心，这里的逻辑就是将多个注册中心注册的服务合并到一起，成为一个Directory，放入同一个ClusterInvoker，
-                //所以说dubbo不管是不是同一个注册中心，所有invoker一样对待。
+                //一个服务有多个url，可能有三种情况：1.多个注册中心；2.直连多个提供者。3.两者共存，即url配了注册中心地址和直连提供者地址，这种情况不确定可不可以，没试出来。
+                //这里情况分两种：1.有注册中心的情况。一个注册中心返回一个ClusterInvoker，包含该注册中心引用的某个服务的所有提供者，相当于返回多个ClusterInvoker。
+                //然后在外层包装ZoneAwareClusterInvoker，ZoneAware内部会选一个集群ClusterInvoker，
+                // 然后调用该集群ClusterInvoker.invoke方法。类似于在正常的集群ClusterInvoker上包了一层选择集群的逻辑，后面就一样了。
+                //情况2：无注册中心的情况。此时认为所有普通invoker都是一个集群的，所以会合并成一个ClusterInvoker.directory，
+                // 后面为默认的.invoker()逻辑。
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {

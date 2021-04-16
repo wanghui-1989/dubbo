@@ -72,6 +72,11 @@ public class ProtocolListenerWrapper implements Protocol {
     @Override
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         if (UrlUtils.isRegistry(url)) {
+            //url为注册中心，服务发现时
+            //url=service-discovery-registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+            //?REGISTRY_CLUSTER=org.apache.dubbo.config.RegistryConfig&application=demo-consumer&dubbo=2.0.2
+            //&mapping-type=metadata&pid=46094&qos.port=33333&registry=zookeeper&registry-type=service&timestamp=1618267262937
+            //protocol为RegistryProtocol
             return protocol.refer(type, url);
         }
 

@@ -911,6 +911,7 @@ public class DubboBootstrap extends GenericEventListener {
                 registerServiceInstance();
             }
 
+            //消费者引用服务
             referServices();
             if (asyncExportingFutures.size() > 0) {
                 new Thread(() -> {
@@ -1124,9 +1125,12 @@ public class DubboBootstrap extends GenericEventListener {
 
     private void referServices() {
         if (cache == null) {
+            //解析后的配置对象会被缓存
             cache = ReferenceConfigCache.getCache();
         }
 
+        //configManager.getReferences()拿到的是对xml中配置的所有<dubbo:reference xxx/>
+        //解析后封装的ReferenceConfig对象
         configManager.getReferences().forEach(rc -> {
             // TODO, compatible with  ReferenceConfig.refer()
             ReferenceConfig referenceConfig = (ReferenceConfig) rc;
@@ -1140,6 +1144,8 @@ public class DubboBootstrap extends GenericEventListener {
                     );
                     asyncReferringFutures.add(future);
                 } else {
+                    //cache为ReferenceConfigCache类型，底层是一个ConcurrentHashMap，
+                    //调用get会初始化对应的ReferenceConfig对象，放入缓存中
                     cache.get(rc);
                 }
             }

@@ -104,13 +104,17 @@ public class ReferenceConfigCache {
 
     @SuppressWarnings("unchecked")
     public <T> T get(ReferenceConfigBase<T> referenceConfig) {
+        //key=org.apache.dubbo.demo.DemoService
         String key = generator.generateKey(referenceConfig);
+        //type=DemoService.class
         Class<?> type = referenceConfig.getInterfaceClass();
-
+        //proxies结构=< DemoService.class, <"org.apache.dubbo.demo.DemoService", DemoService实现类代理对象> >
         proxies.computeIfAbsent(type, _t -> new ConcurrentHashMap<>());
-
+        //proxiesOfType结构=<"org.apache.dubbo.demo.DemoService", DemoService实现类代理对象>
         ConcurrentMap<String, Object> proxiesOfType = proxies.get(type);
         proxiesOfType.computeIfAbsent(key, _k -> {
+            //由ReferenceConfig配置对象触发对应服务接口实现类的创建、加载，以及代理对象的创建。
+            //proxy就是在消费方引用的服务代理对象
             Object proxy = referenceConfig.get();
             referredReferences.put(key, referenceConfig);
             return proxy;

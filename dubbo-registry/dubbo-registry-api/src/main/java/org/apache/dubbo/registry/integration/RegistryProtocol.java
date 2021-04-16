@@ -517,7 +517,13 @@ public class RegistryProtocol implements Protocol {
         //&provided-by=demo-provider&qos.port=33333&side=consumer&sticky=false&timestamp=1617695095106
         URL consumerUrl = new URL(parameters.get(PROTOCOL_KEY) == null ? DUBBO : parameters.get(PROTOCOL_KEY), parameters.get(REGISTER_IP_KEY), 0, getPath(parameters, type), parameters);
         url = url.putAttribute(CONSUMER_URL_KEY, consumerUrl);
+        //url=service-discovery-registry://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService
+        //?REGISTRY_CLUSTER=org.apache.dubbo.config.RegistryConfig&application=demo-consumer&dubbo=2.0.2
+        //&mapping-type=metadata&pid=46094&qos.port=33333&registry=zookeeper&registry-type=service&timestamp=1618267262937
+
+        //因为是注册中心，里面有多个服务提供者，这里是将多个提供者invoker合并set到一个ServiceDiscoveryMigrationInvoker对象中返回
         ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);
+        //执行invoker的拦截器、监听器和invoker本身调用
         return interceptInvoker(migrationInvoker, url, consumerUrl, url);
     }
 
@@ -531,11 +537,13 @@ public class RegistryProtocol implements Protocol {
 
     protected <T> Invoker<T> interceptInvoker(ClusterInvoker<T> invoker, URL url, URL consumerUrl, URL registryURL) {
         List<RegistryProtocolListener> listeners = findRegistryProtocolListeners(url);
+        //默认有一个激活的监听器，MigrationRuleListener类型
         if (CollectionUtils.isEmpty(listeners)) {
             return invoker;
         }
 
         for (RegistryProtocolListener listener : listeners) {
+            //MigrationRuleListener.onRefer(...)
             listener.onRefer(this, invoker, consumerUrl, registryURL);
         }
         return invoker;
