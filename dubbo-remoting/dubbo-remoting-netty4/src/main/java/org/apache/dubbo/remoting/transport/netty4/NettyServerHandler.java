@@ -49,6 +49,12 @@ public class NettyServerHandler extends ChannelDuplexHandler {
 
     private final ChannelHandler handler;
 
+    /**
+     * Netty server handler
+     * @param url     url
+     * @param handler 由协议决定实际的handler对象，如果是dubbo协议，handler为DubboProtocol.requestHandler。
+     *                接口实现里都是由实际的handler来处理业务逻辑。
+     */
     public NettyServerHandler(URL url, ChannelHandler handler) {
         if (url == null) {
             throw new IllegalArgumentException("url == null");

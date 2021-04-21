@@ -105,6 +105,7 @@ public class DubboProtocol extends AbstractProtocol {
     private final ConcurrentMap<String, Object> locks = new ConcurrentHashMap<>();
     private final Set<String> optimizers = new ConcurrentHashSet<>();
 
+    //dubbo协议的IO请求处理器
     private ExchangeHandler requestHandler = new ExchangeHandlerAdapter() {
 
         @Override
@@ -116,7 +117,9 @@ public class DubboProtocol extends AbstractProtocol {
                         + ", channel: consumer: " + channel.getRemoteAddress() + " --> provider: " + channel.getLocalAddress());
             }
 
+            //message为DecodeableRpcInvocation类型
             Invocation inv = (Invocation) message;
+            //根据暴露的Protocol，拿到Exporter，再拿到DubboInvoker
             Invoker<?> invoker = getInvoker(channel, inv);
             // need to consider backward-compatibility if it's a callback
             if (Boolean.TRUE.toString().equals(inv.getObjectAttachments().get(IS_CALLBACK_SERVICE_INVOKE))) {
@@ -142,10 +145,14 @@ public class DubboProtocol extends AbstractProtocol {
                 }
             }
             RpcContext.getContext().setRemoteAddress(channel.getRemoteAddress());
+            //invoker实际为invoker filter chain责任链，
+            //最核心的那个invoker是AbstractProxyInvoker的匿名实现类对象，
+            //它的实现会调用serviceImpl的Wrapper类对象，最终调用serviceImpl对象返回结果。
             Result result = invoker.invoke(inv);
             return result.thenApply(Function.identity());
         }
 
+        //NettyServerHandler.received实际调用该方法
         @Override
         public void received(Channel channel, Object message) throws RemotingException {
             if (message instanceof Invocation) {
@@ -365,6 +372,7 @@ public class DubboProtocol extends AbstractProtocol {
             return;
         }
 
+        //定制序列化方式
         logger.info("Optimizing the serialization process for Kryo, FST, etc...");
 
         try {
@@ -422,6 +430,9 @@ public class DubboProtocol extends AbstractProtocol {
         List<ReferenceCountExchangeClient> shareClients = null;
         // if not configured, connection is shared, otherwise, one connection for one service
         if (connections == 0) {
+            //只有在未配置CONNECTIONS_KEY的时候，或者配置为0的时候，useShareConnect为true，shareClients才有值。
+            //共享客户端，就是共享connection连接，否则一个客户端会创建一到多个新的connection连接，
+            // 也就是消费者为一台机器上的一个服务建立一个或者多个connection连接。
             useShareConnect = true;
 
             /*

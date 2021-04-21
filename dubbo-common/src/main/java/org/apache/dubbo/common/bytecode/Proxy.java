@@ -229,6 +229,7 @@ public abstract class Proxy {
     };
     private static final AtomicLong PROXY_CLASS_COUNTER = new AtomicLong(0);
     private static final String PACKAGE_NAME = Proxy.class.getPackage().getName();
+    //WeakHashMap
     private static final Map<ClassLoader, Map<String, Object>> PROXY_CACHE_MAP = new WeakHashMap<ClassLoader, Map<String, Object>>();
 
     private static final Object PENDING_GENERATION_MARKER = new Object();
@@ -250,7 +251,7 @@ public abstract class Proxy {
      * Get proxy.
      *
      * @param cl  class loader.
-     * @param ics interface class array.
+     * @param ics interface class array. 代理类需要实现的接口，比如EchoService等
      * @return Proxy instance.
      */
     public static Proxy getProxy(ClassLoader cl, Class<?>... ics) {
@@ -380,6 +381,7 @@ public abstract class Proxy {
             ccm = ClassGenerator.newInstance(cl);
             ccm.setClassName(fcn);
             ccm.addDefaultConstructor();
+            //设置Proxy为父类
             ccm.setSuperClass(Proxy.class);
             ccm.addMethod("public Object newInstance(" + InvocationHandler.class.getName() + " h){ return new " + pcn + "($1); }");
             Class<?> pc = ccm.toClass();
